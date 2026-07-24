@@ -124,7 +124,7 @@
         <div class="flex items-center gap-2 w-full md:w-auto">
           <button onclick="openAiModal()" class="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm transition flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
-            <span>AI 새 학습지</span>
+            <span>AI 전체 새 학습지</span>
           </button>
           <button onclick="markTodayComplete()" class="flex-1 md:flex-none px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5">
             <i class="fa-solid fa-check"></i>
@@ -368,182 +368,102 @@
        APPLICATION STATE & DEFAULT SEED CONTENT
        =================================================================== */
     const STORAGE_KEY = 'DAILY_STUDY_MASTER_V1';
-    
-    // Initial Default Seed Content (Day 1)
-    const DEFAULT_DAY1_DATA = {
-      date: new Date().toISOString().split('T')[0],
-      batchNumber: 1,
-      hanja: [
-        {
-          word: "學問",
-          reading: "학문",
-          meaning: "체계적으로 배워서 얻은 지식이나 학설",
-          levelTip: "2급 쓰기 시험 단골 출제! 問(물어볼 문) 자리에 門(문 문)+口(입 구) 주의",
-          example: "끊임없이 學問(학문)을 탐구하는 자세가 중요하다.",
-          characters: [
-            {
-              char: "學",
-              meaningSound: "배울 학",
-              radical: "子 (아들 자)",
-              strokes: 16,
-              story: "아이(子)가 집(宀) 안에서 스승님이 던져주는 지식의 벼락(爻)을 맞고 손(𦥑)으로 머리를 감싸쥐며 '아하!' 하고 배우는 모습!"
-            },
-            {
-              char: "問",
-              meaningSound: "물어볼 문",
-              radical: "口 (입 구)",
-              strokes: 11,
-              story: "대문(門) 앞에 가서 입(口)을 쩍 벌리고 '이봐요, 안에 누구 계신가요?' 하고 물어보는 모습입니다."
-            }
-          ]
-        },
-        {
-          word: "日月",
-          reading: "일월",
-          meaning: "해와 달, 또는 세월과 날짜",
-          levelTip: "기초 상형자 조합으로 2급 부수 변형 유의",
-          example: "日月(일월)이 유수와 같이 빠르게 흐른다.",
-          characters: [
-            {
-              char: "日",
-              meaningSound: "날/해 일",
-              radical: "日 (해 일)",
-              strokes: 4,
-              story: "창문 너머로 쨍쨍 내리쬐는 둥근 해와 그 한가운데 반짝이는 흑점을 그대로 그린 글자입니다."
-            },
-            {
-              char: "月",
-              meaningSound: "달 월",
-              radical: "月 (달 월)",
-              strokes: 4,
-              story: "밤하늘에 예쁘게 떠 있는 초승달 구름 사이로 달빛이 스며 나오는 모양입니다."
-            }
-          ]
-        }
-      ],
-      english: {
-        expression: {
-          phrase: "Hit the nail on the head",
-          meaning: "정곡을 찌르다, 핵심을 정확히 맞히다",
-          nuance: "망치질할 때 못의 머리를 정확히 때려 단번에 쏙 박히는 통쾌한 상황에서 유래!",
-          examples: [
-            "You really hit the nail on the head with that market analysis.",
-            "Her comment during the meeting hit the nail on the head."
-          ]
-        },
-        words: [
-          {
-            word: "Articulate",
-            phonetic: "[ɑːrˈtɪkjuleɪt]",
-            meaning: "(생각·감정을) 명확하게 표현하다",
-            nuance: "'아티스트(Art)'처럼 머릿속 생각을 말로 예쁘게 잘 연주해 내는 느낌!",
-            collocation: "articulate a vision / articulate clearly",
-            example: "She was able to articulate her ideas clearly during the presentation."
-          },
-          {
-            word: "Pragmatic",
-            phonetic: "[præɡˈmætɪk]",
-            meaning: "실용적인, 현실적인",
-            nuance: "구름 잡는 소리 대신 당장 작동하는 실용 대책을 선택하는 스타일!",
-            collocation: "pragmatic approach / pragmatic solution",
-            example: "We need a pragmatic strategy rather than an overly theoretical one."
-          },
-          {
-            word: "Resilient",
-            phonetic: "[rɪˈzɪliənt]",
-            meaning: "회복력이 있는, 시련에 금방 튀어 올라오는",
-            nuance: "눌러도 리-스프링처럼 다시 핑! 하고 튀어 오르는 탱탱볼 성질!",
-            collocation: "highly resilient / resilient economy",
-            example: "The business proved to be remarkably resilient during the crisis."
-          },
-          {
-            word: "Scrutinize",
-            phonetic: "[ˈskruːtənaɪz]",
-            meaning: "돋보기 들고 샅샅이 뒤져보다",
-            nuance: "스크루지 할아버지가 장부 단 1원도 안 틀리게 눈을 가늘게 뜨고 검토하는 모양!",
-            collocation: "scrutinize details / scrutinize data",
-            example: "Regulators will scrutinize the merger proposal carefully."
-          },
-          {
-            word: "Substantial",
-            phonetic: "[səbˈstænʃl]",
-            meaning: "묵직하게 상당한, 실질적인",
-            nuance: "밑에(Sub) 묵직하게 서 있는(Stand) 당당하고 단단한 양감!",
-            collocation: "substantial progress / substantial amount",
-            example: "The company made substantial improvements in customer satisfaction."
-          }
-        ]
-      }
-    };
 
-    // Global State Container
     let appState = {
       apiKey: '',
+      selectedDate: null,
       streak: 1,
-      lastStudyDate: '',
       todayData: null,
-      history: {}, // Map date strings ("YYYY-MM-DD") to daily content objects
-      selectedDate: new Date().toISOString().split('T')[0],
+      history: {},
       archive: [],
       reviewQueue: [],
-      quizStats: { score: 0, total: 0 },
+      quizQuestions: [],
       currentQuizIndex: 0,
-      activeTab: 'today'
+      quizStats: { score: 0, total: 0 }
     };
 
-    /* AUTOMATIC DATE CHECK & ROLLOVER LOGIC */
+    /* EXCLUDED WORDS EXTRACTOR */
+    function getLearnedWordTitles() {
+      const titles = new Set();
+      if (appState.archive) {
+        appState.archive.forEach(item => { if (item.title) titles.add(item.title); });
+      }
+      if (appState.history) {
+        Object.values(appState.history).forEach(day => {
+          day.hanja?.forEach(h => titles.add(h.word));
+          if (day.english?.expression) titles.add(day.english.expression.phrase);
+          day.english?.words?.forEach(w => titles.add(w.word));
+        });
+      }
+      return Array.from(titles);
+    }
+
+    /* DATE CHANGE AND AUTO GENERATION HANDLER */
     async function checkAndHandleDateChange() {
       const todayStr = new Date().toISOString().split('T')[0];
-      if (!appState.history) appState.history = {};
-      if (!appState.selectedDate) appState.selectedDate = todayStr;
       
-      if (!appState.lastStudyDate) {
-        appState.lastStudyDate = todayStr;
-        if (!appState.todayData) appState.todayData = DEFAULT_DAY1_DATA;
-        appState.history[appState.todayData.date || todayStr] = appState.todayData;
-        saveState();
-        return;
+      if (!appState.selectedDate) {
+        appState.selectedDate = todayStr;
       }
 
-      // Keep today's data inside history map
-      if (appState.todayData && appState.todayData.date) {
-        appState.history[appState.todayData.date] = appState.todayData;
-      }
+      if (!appState.history) appState.history = {};
 
-      // If calendar date has rolled over
-      if (appState.todayData && appState.todayData.date !== todayStr) {
-        console.log("Date change detected! Archiving yesterday's items...");
+      // Check if today's data already exists in history or current state
+      if (appState.history[todayStr]) {
+        appState.todayData = appState.history[todayStr];
+      } else if (!appState.todayData || appState.todayData.date !== todayStr) {
+        const lastDateStr = appState.todayData?.date;
         
-        // Move previous items into archive & review queue
-        const prevItems = flattenDataToArchive(appState.todayData);
-        prevItems.forEach(item => {
-          if (!appState.archive.some(a => a.id === item.id)) appState.archive.push(item);
-          if (!appState.reviewQueue.some(r => r.id === item.id)) appState.reviewQueue.push(item);
-        });
-
-        // Update Streak
-        const lastDate = new Date(appState.lastStudyDate);
-        const currentDate = new Date(todayStr);
-        const diffDays = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 1) {
-          appState.streak = (appState.streak || 1) + 1;
-        } else if (diffDays > 1) {
-          appState.streak = 1;
+        // Auto-archive previous day's items
+        if (appState.todayData) {
+          const items = flattenDataToArchive(appState.todayData);
+          items.forEach(item => {
+            if (!appState.archive.some(a => a.id === item.id)) appState.archive.push(item);
+            if (!appState.reviewQueue.some(r => r.id === item.id)) appState.reviewQueue.push(item);
+          });
+          if (lastDateStr) appState.history[lastDateStr] = appState.todayData;
         }
 
-        appState.lastStudyDate = todayStr;
-        appState.selectedDate = todayStr;
-        const nextBatchNum = (appState.todayData.batchNumber || 1) + 1;
+        // Streak calculation
+        if (lastDateStr) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          if (lastDateStr === yesterdayStr) {
+            appState.streak = (appState.streak || 1) + 1;
+          } else if (lastDateStr !== todayStr) {
+            appState.streak = 1;
+          }
+        }
 
-        showToast(`새로운 날(${todayStr})이 되었습니다! 학습지를 생성합니다.`, "info");
+        const nextBatchNum = Object.keys(appState.history).length + 1;
         await generateDailyContent(todayStr, nextBatchNum);
       }
+
+      saveState();
+    }
+
+    async function generateDailyContent(targetDate, batchNum) {
+      let newData = null;
+      if (appState.apiKey) {
+        newData = await fetchGeminiDailyContent(targetDate, batchNum);
+      }
+      if (!newData) {
+        newData = generateFallbackBatch(targetDate, batchNum);
+      }
+
+      appState.todayData = newData;
+      if (!appState.history) appState.history = {};
+      appState.history[targetDate] = newData;
+      saveState();
     }
 
     /* GEMINI AI CONTENT GENERATION WITH STRUCTURED SCHEMA */
     async function fetchGeminiDailyContent(targetDate, batchNum) {
       if (!appState.apiKey) return null;
+
+      const learnedList = getLearnedWordTitles();
+      const excludeStr = learnedList.length > 0 ? `DO NOT use any of the following words/expressions as they are already known by the user: ${learnedList.join(', ')}.` : '';
 
       const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${appState.apiKey}`;
 
@@ -551,14 +471,16 @@
 Generate today's learning pack in JSON format.
 Requirements:
 1. Hanja: 2 compound words (total 4 distinct characters). Target Level 2 Hanja certification progression. Include fun storytelling, radicals, stroke count, exam tips, and example sentence.
-2. English: 1 expression + 5 vocabulary words. Upper-Intermediate to Advanced level. Include phonetic, precise nuance story, collocations, and natural example sentences.`;
+2. English: 1 expression + 5 vocabulary words. Upper-Intermediate to Advanced level. Include phonetic, precise nuance story, collocations, and natural example sentences.
+3. EXCLUSION RULE: ${excludeStr} Make sure every word is fresh, unique, and not in the excluded list.`;
 
-      const userPrompt = `Generate Day ${batchNum} study content for date ${targetDate}.`;
+      const userPrompt = `Generate Day ${batchNum} study content for date ${targetDate}. Ensure all words are unique and fresh. Seed randomness: ${Math.random()}`;
 
       const payload = {
         contents: [{ parts: [{ text: userPrompt }] }],
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
+          temperature: 0.95,
           responseMimeType: "application/json",
           responseSchema: {
             type: "OBJECT",
@@ -645,53 +567,31 @@ Requirements:
       return null;
     }
 
-    /* MAIN GENERATE METHOD WITH FALLBACK */
-    async function generateDailyContent(targetDate, batchNum) {
-      let newBatch = await fetchGeminiDailyContent(targetDate, batchNum);
-
-      if (!newBatch) {
-        newBatch = generateFallbackBatch(targetDate, batchNum);
-      }
-
-      appState.todayData = newBatch;
-      if (!appState.history) appState.history = {};
-      appState.history[targetDate] = newBatch;
-      
-      saveState();
-      renderTodayView();
-      renderReviewSection();
-      showToast(`Day ${batchNum} 학습지 생성이 완료되었습니다!`, "success");
-    }
-
-    /* FALLBACK CURRICULUM GENERATOR */
+    /* ENHANCED FALLBACK CURRICULUM GENERATOR WITH DEDUPLICATION */
     function generateFallbackBatch(targetDate, batchNum) {
+      const learned = new Set(getLearnedWordTitles());
+
       const hanjaPool = [
         {
-          word: "學問",
-          reading: "학문",
-          meaning: "체계적으로 배워서 얻은 지식이나 학설",
+          word: "學問", reading: "학문", meaning: "체계적으로 배워서 얻은 지식이나 학설",
           levelTip: "2급 쓰기 시험 단골 출제! 問(물어볼 문) 자리에 門(문 문)+口(입 구) 주의",
           example: "끊임없이 學問(학문)을 탐구하는 자세가 중요하다.",
           characters: [
-            { char: "學", meaningSound: "배울 학", radical: "子 (아들 자)", strokes: 16, story: "아이(子)가 집(宀) 안에서 스승님이 던져주는 지식의 벼락(爻)을 맞고 손(𦥑)으로 머리를 감싸쥐며 '아하!' 하고 배우는 모습!" },
-            { char: "問", meaningSound: "물어볼 문", radical: "口 (입 구)", strokes: 11, story: "대문(門) 앞에 가서 입(口)을 쩍 벌리고 '이봐요, 안에 누구 계신가요?' 하고 물어보는 모습입니다." }
+            { char: "學", meaningSound: "배울 학", radical: "子 (아들 자)", strokes: 16, story: "아이(子)가 집(宀) 안에서 지식의 벼락(爻)을 맞고 손으로 머리를 감싸며 '아하!' 배우는 모습!" },
+            { char: "問", meaningSound: "물어볼 문", radical: "口 (입 구)", strokes: 11, story: "대문(門) 앞에 가서 입(口)을 벌리고 '안에 누구 계신가요?' 하고 물어보는 모양입니다." }
           ]
         },
         {
-          word: "日月",
-          reading: "일월",
-          meaning: "해와 달, 또는 세월과 날짜",
+          word: "日月", reading: "일월", meaning: "해와 달, 또는 세월과 날짜",
           levelTip: "기초 상형자 조합으로 2급 부수 변형 유의",
           example: "日月(일월)이 유수와 같이 빠르게 흐른다.",
           characters: [
-            { char: "日", meaningSound: "날/해 일", radical: "日 (해 일)", strokes: 4, story: "창문 너머로 쨍쨍 내리쬐는 둥근 해와 그 한가운데 반짝이는 흑점을 그대로 그린 글자입니다." },
+            { char: "日", meaningSound: "날/해 일", radical: "日 (해 일)", strokes: 4, story: "창문 너머 쨍쨍 내리쬐는 둥근 해와 그 한가운데 반짝이는 흑점을 그대로 그린 글자입니다." },
             { char: "月", meaningSound: "달 월", radical: "月 (달 월)", strokes: 4, story: "밤하늘에 예쁘게 떠 있는 초승달 구름 사이로 달빛이 스며 나오는 모양입니다." }
           ]
         },
         {
-          word: "靑春",
-          reading: "청춘",
-          meaning: "만물이 푸른 봄철, 피어나는 젊음의 시기",
+          word: "靑春", reading: "청춘", meaning: "만물이 푸른 봄철, 피어나는 젊음의 시기",
           levelTip: "靑(푸를 청)과 春(봄 춘) 모두 2급 필수 한자",
           example: "靑春(청춘)의 열정을 마음에 간직하자.",
           characters: [
@@ -700,36 +600,54 @@ Requirements:
           ]
         },
         {
-          word: "創意",
-          reading: "창의",
-          meaning: "새로운 생각이나 의견을 내놓음",
+          word: "創意", reading: "창의", meaning: "새로운 생각이나 의견을 내놓음",
           levelTip: "創(비롯할 창)의 부수는 刂(칼 도)로 칼로 조각하는 듯한 창조를 의미",
           example: "문제 해결을 위해 創意(창의)적인 접근이 필요하다.",
           characters: [
             { char: "創", meaningSound: "비롯할 창", radical: "刂 (선칼도방)", strokes: 12, story: "칼(刂)로 원석을 깎아내어 이전까지 없던 새로운 형상을 세상에 빚어내는 창조의 과정!" },
             { char: "意", meaningSound: "뜻 의", radical: "心 (마음 심)", strokes: 13, story: "마음(心)속 깊은 곳에서 울려 퍼지는 소리(音)와 진실된 뜻!" }
           ]
+        },
+        {
+          word: "誠實", reading: "성실", meaning: "태도나 행동이 정성스럽고 참됨",
+          levelTip: "誠(정성 성) 자의 言(말 언)+成(이룰 성) 조합 유의",
+          example: "그는 매사에 誠實(성실)한 태도로 임한다.",
+          characters: [
+            { char: "誠", meaningSound: "정성 성", radical: "言 (말 언)", strokes: 13, story: "말(言)한 바를 반드시 이루어 내는(成) 진실되고 정성스러운 마음!" },
+            { char: "實", meaningSound: "열매/열릴 실", radical: "宀 (집 면)", strokes: 14, story: "집(宀) 안에 재물(貫)이 가득 차서 열매를 맺은 풍족한 모양입니다." }
+          ]
+        },
+        {
+          word: " my 觀察", reading: "관찰", meaning: "사물이나 현상을 주의 깊게 살펴봄",
+          levelTip: "觀(볼 관) 자의 2급 복합 자형 정확히 익히기",
+          example: "자연 현상을 면밀히 觀察(관찰)하였다.",
+          characters: [
+            { char: "觀", meaningSound: "볼 관", radical: "見 (볼 견)", strokes: 25, story: "황새(雚)처럼 눈을 커다랗게 뜨고 사물을 바짝 보는(見) 자세!" },
+            { char: "察", meaningSound: "살필 찰", radical: "宀 (집 면)", strokes: 14, story: "집(宀) 안에서 제사(祭)를 지낼 때 정성을 다해 하나하나 살피는 모양!" }
+          ]
         }
       ];
 
       const exprPool = [
         {
-          phrase: "Hit the nail on the head",
-          meaning: "정곡을 찌르다, 핵심을 정확히 맞히다",
+          phrase: "Hit the nail on the head", meaning: "정곡을 찌르다, 핵심을 정확히 맞히다",
           nuance: "망치질할 때 못의 머리를 정확히 때려 단번에 쏙 박히는 통쾌한 상황에서 유래!",
-          examples: [
-            "You really hit the nail on the head with that market analysis.",
-            "Her comment during the meeting hit the nail on the head."
-          ]
+          examples: ["You really hit the nail on the head with that market analysis.", "Her comment during the meeting hit the nail on the head."]
         },
         {
-          phrase: "Bite the bullet",
-          meaning: "이를 악물고 어려움을 견디다, 피할 수 없는 일을 정면 돌파하다",
+          phrase: "Bite the bullet", meaning: "이를 악물고 어려움을 견디다, 피할 수 없는 일을 정면 돌파하다",
           nuance: "마취제 없던 시절 수술할 때 총알(Bullet)을 깨물며 고통을 참던 전쟁터 유래!",
-          examples: [
-            "I hate going to the dentist, but I'll just have to bite the bullet.",
-            "We decided to bite the bullet and invest in new equipment."
-          ]
+          examples: ["I hate going to the dentist, but I'll just have to bite the bullet.", "We decided to bite the bullet and invest in new equipment."]
+        },
+        {
+          phrase: "Burn the midnight oil", meaning: "밤늦게까지 공부하거나 일하다",
+          nuance: "전기가 없던 시절 밤늦게 기름 등잔(Midnight oil)을 태우며 학업에 매진하던 모습!",
+          examples: ["He was burning the midnight oil to finish the research paper.", "We had to burn the midnight oil to meet the tight deadline."]
+        },
+        {
+          phrase: "Break the ice", meaning: "어색한 분위기를 누그러뜨리다",
+          nuance: "꽁꽁 언 얼음을 깨고 배가 오갈 수 있도록 길을 터주는 첫인사 상황!",
+          examples: ["An introductory game is a great way to break the ice.", "Her warm smile helped break the ice at the start of the interview."]
         }
       ];
 
@@ -740,27 +658,70 @@ Requirements:
         { word: "Scrutinize", phonetic: "[ˈskruːtənaɪz]", meaning: "돋보기 들고 샅샅이 뒤져보다", nuance: "스크루지 할아버지가 장부 단 1원도 안 틀리게 눈을 가늘게 뜨고 검토하는 모양!", collocation: "scrutinize details / scrutinize data", example: "Regulators will scrutinize the merger proposal carefully." },
         { word: "Substantial", phonetic: "[səbˈstænʃl]", meaning: "묵직하게 상당한, 실질적인", nuance: "밑에(Sub) 묵직하게 서 있는(Stand) 당당하고 단단한 양감!", collocation: "substantial progress / substantial amount", example: "The company made substantial improvements in customer satisfaction." },
         { word: "Meticulous", phonetic: "[məˈtɪkjələs]", meaning: "꼼꼼한, 세심한", nuance: "하나도 빠짐없이 차곡차곡 챙기는 완벽주의자의 섬세함!", collocation: "meticulous attention / meticulous planning", example: "He paid meticulous attention to every single detail in the report." },
-        { word: "Versatile", phonetic: "[ˈvɜːrsətl]", meaning: "다재다능한, 용도가 다양한", nuance: "어디에 가져다 놓아도 찰떡같이 변신해 제 역할을 해내는 만능엔터테이너!", collocation: "versatile tool / highly versatile", example: "This multi-tool is extremely versatile for outdoor camping." }
+        { word: "Versatile", phonetic: "[ˈvɜːrsətl]", meaning: "다재다능한, 용도가 다양한", nuance: "어디에 가져다 놓아도 찰떡같이 변신해 제 역할을 해내는 만능엔터테이너!", collocation: "versatile tool / highly versatile", example: "This multi-tool is extremely versatile for outdoor camping." },
+        { word: "Inevitably", phonetic: "[ɪnˈevɪtəbli]", meaning: "필연적으로, 불가피하게", nuance: "피할 수 없는 흐름처럼 당연히 다가오는 결말!", collocation: "inevitably lead to / inevitably happen", example: "Ignoring customer feedback will inevitably harm the brand reputation." },
+        { word: "Formidable", phonetic: "[ˈfɔːrmɪdəbl]", meaning: "만만치 않은, 어마어마한", nuance: "상대방이 너무 막강하여 경외심과 압박감을 느끼게 되는 강적!", collocation: "formidable challenge / formidable opponent", example: "The company faces formidable competition in the global market." },
+        { word: "Elaborate", phonetic: "[ɪˈlæbərət]", meaning: "정교한, 공들인", nuance: "하나하나 세밀하게 노동(Labor)을 들여 정밀하게 완성해낸 모습!", collocation: "elaborate design / elaborate plan", example: "They prepared an elaborate presentation for the investors." }
       ];
 
-      const hIdx1 = (batchNum * 2) % hanjaPool.length;
-      const hIdx2 = (batchNum * 2 + 1) % hanjaPool.length;
-      const eIdx = batchNum % exprPool.length;
+      // Filter out learned items
+      const unlearnedHanja = hanjaPool.filter(h => !learned.has(h.word));
+      const unlearnedExpr = exprPool.filter(e => !learned.has(e.phrase));
+      const unlearnedWords = wordPool.filter(w => !learned.has(w.word));
 
-      const selectedWords = [];
-      for (let i = 0; i < 5; i++) {
-        selectedWords.push(wordPool[(batchNum * 5 + i) % wordPool.length]);
-      }
+      // Fallback selection pool
+      const selectedHanja = shuffleArray(unlearnedHanja.length >= 2 ? unlearnedHanja : hanjaPool).slice(0, 2);
+      const selectedExpr = (unlearnedExpr.length > 0 ? shuffleArray(unlearnedExpr) : exprPool)[0];
+      const selectedWords = shuffleArray(unlearnedWords.length >= 5 ? unlearnedWords : wordPool).slice(0, 5);
 
       return {
         date: targetDate,
         batchNumber: batchNum,
-        hanja: [hanjaPool[hIdx1], hanjaPool[hIdx2]],
+        hanja: selectedHanja,
         english: {
-          expression: exprPool[eIdx],
+          expression: selectedExpr,
           words: selectedWords
         }
       };
+    }
+
+    const DEFAULT_DAY1_DATA = generateFallbackBatch(new Date().toISOString().split('T')[0], 1);
+
+    /* SINGLE WORD REPLACEMENT HANDLER (아는 단어 교체) */
+    async function replaceSingleCard(type, index) {
+      if (!appState.todayData) return;
+
+      showToast("새로운 대체 단어를 가져오는 중입니다...", "info");
+
+      // Add current word to archive so it won't repeat
+      if (type === 'HANJA' && appState.todayData.hanja[index]) {
+        const cur = appState.todayData.hanja[index];
+        if (!appState.archive.some(a => a.id === 'hanja_' + cur.word)) {
+          appState.archive.push({ id: 'hanja_' + cur.word, type: 'HANJA', title: cur.word, sub: cur.reading, meaning: cur.meaning, detail: cur.levelTip });
+        }
+      } else if (type === 'WORD' && appState.todayData.english?.words[index]) {
+        const cur = appState.todayData.english.words[index];
+        if (!appState.archive.some(a => a.id === 'word_' + cur.word)) {
+          appState.archive.push({ id: 'word_' + cur.word, type: 'WORD', title: cur.word, sub: cur.phonetic, meaning: cur.meaning, detail: cur.nuance });
+        }
+      }
+
+      // Generate a updated batch with new unlearned candidates
+      const todayStr = appState.selectedDate || new Date().toISOString().split('T')[0];
+      const newBatch = await fetchGeminiDailyContent(todayStr, appState.todayData.batchNumber || 1) || generateFallbackBatch(todayStr, appState.todayData.batchNumber || 1);
+
+      if (type === 'HANJA' && newBatch.hanja?.[0]) {
+        appState.todayData.hanja[index] = newBatch.hanja[0];
+      } else if (type === 'WORD' && newBatch.english?.words?.[0]) {
+        appState.todayData.english.words[index] = newBatch.english.words[0];
+      } else if (type === 'EXPR' && newBatch.english?.expression) {
+        appState.todayData.english.expression = newBatch.english.expression;
+      }
+
+      if (appState.history) appState.history[todayStr] = appState.todayData;
+      saveState();
+      renderTodayView();
+      showToast("새 단어로 교체되었습니다! ✨", "success");
     }
 
     /* RENDERING TODAY VIEW WITH DATE NAVIGATION SUPPORT */
@@ -768,7 +729,6 @@ Requirements:
       const todayStr = new Date().toISOString().split('T')[0];
       const curDate = appState.selectedDate || todayStr;
       
-      // Update Date Picker Controls
       const datePicker = document.getElementById('datePickerInput');
       if (datePicker) datePicker.value = curDate;
 
@@ -784,7 +744,6 @@ Requirements:
         else btnNextDate.disabled = false;
       }
 
-      // Fetch data for selected date (from history or todayData)
       let data = null;
       if (appState.history && appState.history[curDate]) {
         data = appState.history[curDate];
@@ -796,7 +755,6 @@ Requirements:
       const exprContainer = document.getElementById('englishExprContainer');
       const wordsContainer = document.getElementById('englishWordsContainer');
 
-      // Empty State for past date without record
       if (!data) {
         document.getElementById('todayBatchBadge').innerText = `기록 없음`;
         document.getElementById('todayDateBadge').innerText = curDate;
@@ -828,9 +786,14 @@ Requirements:
               </div>
               <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">${h.meaning}</p>
             </div>
-            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
-              단어 ${idx + 1}
-            </span>
+            <div class="flex items-center space-x-2">
+              <button onclick="replaceSingleCard('HANJA', ${idx})" class="text-[11px] px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-rose-50 dark:hover:bg-rose-950 hover:text-rose-600 font-semibold transition" title="아는 단어라 다른 단어로 변경">
+                <i class="fa-solid fa-rotate text-[10px] mr-1"></i>아는 단어 교체
+              </button>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+                단어 ${idx + 1}
+              </span>
+            </div>
           </div>
 
           <!-- Characters Breakdown -->
@@ -880,6 +843,9 @@ Requirements:
               </h4>
               <p class="text-xs font-bold text-blue-800 dark:text-blue-300 mt-0.5">${expr.meaning}</p>
             </div>
+            <button onclick="replaceSingleCard('EXPR', 0)" class="text-[11px] px-2.5 py-1 rounded-lg bg-white/80 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-blue-100 font-semibold transition flex items-center gap-1">
+              <i class="fa-solid fa-rotate text-[10px]"></i>표현 교체
+            </button>
           </div>
 
           <p class="text-xs text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700 leading-relaxed">
@@ -904,7 +870,12 @@ Requirements:
                 <i class="fa-solid fa-volume-high"></i>
               </button>
             </div>
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${w.meaning}</span>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${w.meaning}</span>
+              <button onclick="replaceSingleCard('WORD', ${idx})" class="text-[10px] px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 font-semibold transition" title="아는 단어 교체">
+                <i class="fa-solid fa-rotate"></i>
+              </button>
+            </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
