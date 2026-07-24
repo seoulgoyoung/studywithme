@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>매일 한자 & 영어 마스터 (Daily Hanja & English Mastery)</title>
+  
+  <!-- PWA & Mobile Web App Capable Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#4f46e5">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 9999px; }
+    
+    /* Flip Card Animation */
+    .perspective-1000 { perspective: 1000px; }
+    .transform-style-3d { transform-style: preserve-3d; }
+    .backface-hidden { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .rotate-y-180 { transform: rotateY(180deg); }
+
+    /* Touch Optimizations */
+    button, a, div { -webkit-tap-highlight-color: transparent; }
+    
+    /* Safe Area Padding for Mobile Notch/Home Bar */
+    .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1rem); }
+    .pt-safe { padding-top: env(safe-area-inset-top, 1rem); }
+  </style>
+</head>
+
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans h-full flex flex-col antialiased selection:bg-indigo-500 selection:text-white pb-20 md:pb-6">
+
+  <!-- HEADER BAR -->
+  <header class="sticky top-0 z-40 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 px-4 py-3 transition-colors">
+    <div class="max-w-3xl mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+          <i class="fa-solid fa-graduation-cap text-lg"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base md:text-lg leading-tight flex items-center gap-1.5">
+            <span>매일 한영 마스터</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-semibold border border-indigo-200 dark:border-indigo-800">
+              초보→2급 & 고급영어
+            </span>
+          </h1>
+          <p id="headerDateText" class="text-xs text-slate-600 dark:text-slate-300">로딩 중...</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Streak Badge -->
+        <div class="flex items-center space-x-1 bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60 px-2.5 py-1 rounded-full text-xs font-bold">
+          <i class="fa-solid fa-fire text-amber-500 animate-bounce"></i>
+          <span id="streakDaysCount">1</span><span>일째</span>
+        </div>
+
+        <!-- Settings Button -->
+        <button onclick="openSettingsModal()" class="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-200 flex items-center justify-center transition" title="설정">
+          <i class="fa-solid fa-gear"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTENT CONTAINER -->
+  <main class="flex-1 max-w-3xl w-full mx-auto p-4 space-y-6">
+
+    <!-- VIEW 1: TODAY (오늘의 학습) -->
+    <section id="viewToday" class="space-y-6">
+      <!-- DATE NAVIGATOR & CALENDAR PICKER -->
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-between text-xs">
+        <button onclick="changeSelectedDate(-1)" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-chevron-left text-[10px]"></i>
+          <span class="hidden sm:inline">이전 날짜</span>
+        </button>
+
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-calendar-days text-indigo-500"></i>
+          <input type="date" id="datePickerInput" onchange="onDatePickerChange(event)" class="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1 font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-xs">
+          <button onclick="goToday()" id="btnGoToday" class="hidden px-2.5 py-1 rounded-xl bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-bold text-[11px] hover:bg-indigo-200 transition">
+            오늘로
+          </button>
+        </div>
+
+        <button onclick="changeSelectedDate(1)" id="btnNextDate" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-indigo-950 hover:text-indigo-600 dark:hover:text-indigo-400 font-bold flex items-center gap-1.5 transition disabled:opacity-40 disabled:pointer-events-none">
+          <span class="hidden sm:inline">다음 날짜</span>
+          <i class="fa-solid fa-chevron-right text-[10px]"></i>
+        </button>
+      </div>
+
+      <!-- Top Action Banner -->
+      <div class="bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-700 rounded-2xl p-5 text-white shadow-xl shadow-indigo-500/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="todayBatchBadge" class="bg-white/20 backdrop-blur-md px-2.5 py-0.5 rounded-md text-xs font-semibold">Day 1</span>
+            <span id="todayDateBadge" class="text-xs text-indigo-100"></span>
+          </div>
+          <h2 class="text-xl font-bold mt-1">오늘의 한자 2단어 + 영어 세트</h2>
+          <p class="text-xs text-indigo-100 mt-0.5">아침 5분 투자로 재미있는 스토리 암기법과 실전 뉘앙스를 익히세요!</p>
+        </div>
+        
+        <div class="flex items-center gap-2 w-full md:w-auto">
+          <button onclick="openAiModal()" class="flex-1 md:flex-none px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/20 backdrop-blur-sm transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+            <span>AI 새 학습지</span>
+          </button>
+          <button onclick="markTodayComplete()" class="flex-1 md:flex-none px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5">
+            <i class="fa-solid fa-check"></i>
+            <span>학습 완료</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SECTION 1: HANJA CONTENT -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-lg flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-rose-100 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs font-bold">🈲</span>
+            <span>오늘의 한자 (2단어 / 4글자)</span>
+          </h3>
+          <span class="text-xs text-slate-600 dark:text-slate-300">목표: 한자검정 2급 도약</span>
+        </div>
+
+        <div id="hanjaCardsContainer" class="grid grid-cols-1 gap-4">
+          <!-- Dynamic Hanja Cards Rendered Here -->
+        </div>
+      </div>
+
+      <!-- SECTION 2: ENGLISH CONTENT -->
+      <div class="space-y-4 pt-2">
+        <div class="flex items-center justify-between">
+          <h3 class="font-bold text-lg flex items-center gap-2">
+            <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs font-bold">🔤</span>
+            <span>오늘의 영어 (표현 1개 + 고급단어 5개)</span>
+          </h3>
+          <span class="text-xs text-slate-600 dark:text-slate-300">레벨: 중고급 (Upper-Inter)</span>
+        </div>
+
+        <!-- Expression Card -->
+        <div id="englishExprContainer">
+          <!-- Dynamic Expression Rendered Here -->
+        </div>
+
+        <!-- Words List Cards -->
+        <div id="englishWordsContainer" class="grid grid-cols-1 gap-3">
+          <!-- Dynamic Words Rendered Here -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: QUIZ (학습하기) -->
+    <section id="viewQuiz" class="hidden space-y-6">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+          <div>
+            <h3 class="font-bold text-lg flex items-center gap-2">
+              <i class="fa-solid fa-gamepad text-indigo-500"></i>
+              <span>대화형 학습 점검 퀴즈</span>
+            </h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300">오늘 배운 한자와 영어 표현을 테스트해보세요!</p>
+          </div>
+          <div class="text-right">
+            <span id="quizScoreBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+              점수: 0 / 0
+            </span>
+          </div>
+        </div>
+
+        <!-- Dynamic Quiz Card -->
+        <div id="quizContentArea" class="py-4 space-y-6">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: REVIEW (저녁 복습 - 플래시카드) -->
+    <section id="viewReview" class="hidden space-y-6">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+          <div>
+            <h3 class="font-bold text-lg flex items-center gap-2">
+              <i class="fa-solid fa-moon text-amber-500"></i>
+              <span>저녁 복습 플래시카드</span>
+            </h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300">카드를 터치하여 뒷면의 정답을 확인하세요.</p>
+          </div>
+          <span id="reviewQueueCount" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+            남은 카드: 0
+          </span>
+        </div>
+
+        <!-- Flashcard Component -->
+        <div id="flashcardArea" class="py-2">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: ARCHIVE (누적 단어장) -->
+    <section id="viewArchive" class="hidden space-y-4">
+      <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-box-archive text-emerald-500"></i>
+          <span>누적 학습 단어장</span>
+        </h3>
+        
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="archiveSearchInput" oninput="renderArchiveSection()" placeholder="한자, 영단어, 뜻으로 검색..." class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          </div>
+          <select id="archiveFilterSelect" onchange="renderArchiveSection()" class="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="ALL">전체 보기</option>
+            <option value="HANJA">한자만 보기</option>
+            <option value="EXPR">영어 표현만 보기</option>
+            <option value="WORD">영어 단어만 보기</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Archive List -->
+      <div id="archiveItemsList" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM STICKY NAVIGATION DOCK (Mobile First) -->
+  <nav class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 px-2 py-1.5 pb-safe">
+    <div class="max-w-md mx-auto flex items-center justify-around">
+      <button onclick="switchTab('today')" id="nav-today" class="flex flex-col items-center py-1 px-3 rounded-xl text-indigo-600 dark:text-indigo-400 font-bold transition">
+        <i class="fa-solid fa-sun text-base"></i>
+        <span class="text-[10px] mt-0.5">오늘 학습</span>
+      </button>
+
+      <button onclick="switchTab('quiz')" id="nav-quiz" class="flex flex-col items-center py-1 px-3 rounded-xl text-slate-600 dark:text-slate-300 font-semibold transition hover:text-indigo-500">
+        <i class="fa-solid fa-circle-question text-base"></i>
+        <span class="text-[10px] mt-0.5">학습하기</span>
+      </button>
+
+      <button onclick="switchTab('review')" id="nav-review" class="flex flex-col items-center py-1 px-3 rounded-xl text-slate-600 dark:text-slate-300 font-semibold transition hover:text-indigo-500">
+        <i class="fa-solid fa-layer-group text-base"></i>
+        <span class="text-[10px] mt-0.5">저녁 복습</span>
+      </button>
+
+      <button onclick="switchTab('archive')" id="nav-archive" class="flex flex-col items-center py-1 px-3 rounded-xl text-slate-600 dark:text-slate-300 font-semibold transition hover:text-indigo-500">
+        <i class="fa-solid fa-book-bookmark text-base"></i>
+        <span class="text-[10px] mt-0.5">누적 단어장</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL 1: SETTINGS MODAL -->
+  <div id="modalSettings" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-indigo-500"></i>
+          <span>학습 설정</span>
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Gemini API Key Input -->
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          Google Gemini API Key (선택 사항)
+        </label>
+        <input type="password" id="inputApiKey" placeholder="AI 자동 생성용 키 입력..." class="w-full px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <p class="text-[11px] text-slate-600 dark:text-slate-300">
+          * 키가 없어도 내장 백업 알고리즘으로 매일 새로운 단어가 공급됩니다.
+        </p>
+      </div>
+
+      <!-- Theme Switch -->
+      <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700">
+        <span class="text-xs font-bold">다크 모드</span>
+        <button onclick="toggleDarkMode()" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-700 text-xs font-semibold">
+          <i class="fa-solid fa-circle-half-stroke"></i> 테마 전환
+        </button>
+      </div>
+
+      <!-- Data Reset Button -->
+      <div class="pt-2 border-t border-slate-100 dark:border-slate-700">
+        <button onclick="resetAllData()" class="w-full py-2 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 font-bold text-xs hover:bg-rose-100 transition">
+          모든 학습 기록 초기화
+        </button>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="saveSettings()" class="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition">
+          설정 저장하기
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: AI NEW GENERATION MODAL -->
+  <div id="modalAi" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+        <h3 class="font-bold text-lg flex items-center gap-2">
+          <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+          <span>AI 맞춤 학습지 생성</span>
+        </h3>
+        <button onclick="closeAiModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        Gemini AI가 <strong>한자 2단어 (4자) + 고급 영어 표현 1개 / 단어 5개</strong>를 맞춤 난이도로 즉시 추출하여 오늘 학습지로 구성합니다.
+      </p>
+
+      <div id="aiLoadingSpinner" class="hidden py-6 text-center space-y-3">
+        <div class="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 animate-pulse">
+          AI가 어원 스토리와 원어민 뉘앙스를 분석 중입니다...
+        </p>
+      </div>
+
+      <div id="aiModalActions" class="flex gap-2 pt-2">
+        <button onclick="closeAiModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-700 font-semibold text-slate-600 dark:text-slate-300 text-xs">
+          취소
+        </button>
+        <button onclick="triggerManualAiGenerate()" class="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+          <i class="fa-solid fa-bolt"></i>
+          <span>새 단어 생성하기</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast" class="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-slate-900/90 dark:bg-white/90 text-white dark:text-slate-900 text-xs font-bold shadow-xl transition-all duration-300 opacity-0 pointer-events-none flex items-center gap-2">
+    <i id="toastIcon" class="fa-solid fa-circle-info text-indigo-400 dark:text-indigo-600"></i>
+    <span id="toastMessage">메시지</span>
+  </div>
+
+  <script>
+    /* ===================================================================
+       APPLICATION STATE & DEFAULT SEED CONTENT
+       =================================================================== */
+    const STORAGE_KEY = 'DAILY_STUDY_MASTER_V1';
+    
+    // Initial Default Seed Content (Day 1)
+    const DEFAULT_DAY1_DATA = {
+      date: new Date().toISOString().split('T')[0],
+      batchNumber: 1,
+      hanja: [
+        {
+          word: "學問",
+          reading: "학문",
+          meaning: "체계적으로 배워서 얻은 지식이나 학설",
+          levelTip: "2급 쓰기 시험 단골 출제! 問(물어볼 문) 자리에 門(문 문)+口(입 구) 주의",
+          example: "끊임없이 學問(학문)을 탐구하는 자세가 중요하다.",
+          characters: [
+            {
+              char: "學",
+              meaningSound: "배울 학",
+              radical: "子 (아들 자)",
+              strokes: 16,
+              story: "아이(子)가 집(宀) 안에서 스승님이 던져주는 지식의 벼락(爻)을 맞고 손(𦥑)으로 머리를 감싸쥐며 '아하!' 하고 배우는 모습!"
+            },
+            {
+              char: "問",
+              meaningSound: "물어볼 문",
+              radical: "口 (입 구)",
+              strokes: 11,
+              story: "대문(門) 앞에 가서 입(口)을 쩍 벌리고 '이봐요, 안에 누구 계신가요?' 하고 물어보는 모습입니다."
+            }
+          ]
+        },
+        {
+          word: "日月",
+          reading: "일월",
+          meaning: "해와 달, 또는 세월과 날짜",
+          levelTip: "기초 상형자 조합으로 2급 부수 변형 유의",
+          example: "日月(일월)이 유수와 같이 빠르게 흐른다.",
+          characters: [
+            {
+              char: "日",
+              meaningSound: "날/해 일",
+              radical: "日 (해 일)",
+              strokes: 4,
+              story: "창문 너머로 쨍쨍 내리쬐는 둥근 해와 그 한가운데 반짝이는 흑점을 그대로 그린 글자입니다."
+            },
+            {
+              char: "月",
+              meaningSound: "달 월",
+              radical: "月 (달 월)",
+              strokes: 4,
+              story: "밤하늘에 예쁘게 떠 있는 초승달 구름 사이로 달빛이 스며 나오는 모양입니다."
+            }
+          ]
+        }
+      ],
+      english: {
+        expression: {
+          phrase: "Hit the nail on the head",
+          meaning: "정곡을 찌르다, 핵심을 정확히 맞히다",
+          nuance: "망치질할 때 못의 머리를 정확히 때려 단번에 쏙 박히는 통쾌한 상황에서 유래!",
+          examples: [
+            "You really hit the nail on the head with that market analysis.",
+            "Her comment during the meeting hit the nail on the head."
+          ]
+        },
+        words: [
+          {
+            word: "Articulate",
+            phonetic: "[ɑːrˈtɪkjuleɪt]",
+            meaning: "(생각·감정을) 명확하게 표현하다",
+            nuance: "'아티스트(Art)'처럼 머릿속 생각을 말로 예쁘게 잘 연주해 내는 느낌!",
+            collocation: "articulate a vision / articulate clearly",
+            example: "She was able to articulate her ideas clearly during the presentation."
+          },
+          {
+            word: "Pragmatic",
+            phonetic: "[præɡˈmætɪk]",
+            meaning: "실용적인, 현실적인",
+            nuance: "구름 잡는 소리 대신 당장 작동하는 실용 대책을 선택하는 스타일!",
+            collocation: "pragmatic approach / pragmatic solution",
+            example: "We need a pragmatic strategy rather than an overly theoretical one."
+          },
+          {
+            word: "Resilient",
+            phonetic: "[rɪˈzɪliənt]",
+            meaning: "회복력이 있는, 시련에 금방 튀어 올라오는",
+            nuance: "눌러도 리-스프링처럼 다시 핑! 하고 튀어 오르는 탱탱볼 성질!",
+            collocation: "highly resilient / resilient economy",
+            example: "The business proved to be remarkably resilient during the crisis."
+          },
+          {
+            word: "Scrutinize",
+            phonetic: "[ˈskruːtənaɪz]",
+            meaning: "돋보기 들고 샅샅이 뒤져보다",
+            nuance: "스크루지 할아버지가 장부 단 1원도 안 틀리게 눈을 가늘게 뜨고 검토하는 모양!",
+            collocation: "scrutinize details / scrutinize data",
+            example: "Regulators will scrutinize the merger proposal carefully."
+          },
+          {
+            word: "Substantial",
+            phonetic: "[səbˈstænʃl]",
+            meaning: "묵직하게 상당한, 실질적인",
+            nuance: "밑에(Sub) 묵직하게 서 있는(Stand) 당당하고 단단한 양감!",
+            collocation: "substantial progress / substantial amount",
+            example: "The company made substantial improvements in customer satisfaction."
+          }
+        ]
+      }
+    };
+
+    // Global State Container
+    let appState = {
+      apiKey: '',
+      streak: 1,
+      lastStudyDate: '',
+      todayData: null,
+      history: {}, // Map date strings ("YYYY-MM-DD") to daily content objects
+      selectedDate: new Date().toISOString().split('T')[0],
+      archive: [],
+      reviewQueue: [],
+      quizStats: { score: 0, total: 0 },
+      currentQuizIndex: 0,
+      activeTab: 'today'
+    };
+
+    /* AUTOMATIC DATE CHECK & ROLLOVER LOGIC */
+    async function checkAndHandleDateChange() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (!appState.history) appState.history = {};
+      if (!appState.selectedDate) appState.selectedDate = todayStr;
+      
+      if (!appState.lastStudyDate) {
+        appState.lastStudyDate = todayStr;
+        if (!appState.todayData) appState.todayData = DEFAULT_DAY1_DATA;
+        appState.history[appState.todayData.date || todayStr] = appState.todayData;
+        saveState();
+        return;
+      }
+
+      // Keep today's data inside history map
+      if (appState.todayData && appState.todayData.date) {
+        appState.history[appState.todayData.date] = appState.todayData;
+      }
+
+      // If calendar date has rolled over
+      if (appState.todayData && appState.todayData.date !== todayStr) {
+        console.log("Date change detected! Archiving yesterday's items...");
+        
+        // Move previous items into archive & review queue
+        const prevItems = flattenDataToArchive(appState.todayData);
+        prevItems.forEach(item => {
+          if (!appState.archive.some(a => a.id === item.id)) appState.archive.push(item);
+          if (!appState.reviewQueue.some(r => r.id === item.id)) appState.reviewQueue.push(item);
+        });
+
+        // Update Streak
+        const lastDate = new Date(appState.lastStudyDate);
+        const currentDate = new Date(todayStr);
+        const diffDays = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          appState.streak = (appState.streak || 1) + 1;
+        } else if (diffDays > 1) {
+          appState.streak = 1;
+        }
+
+        appState.lastStudyDate = todayStr;
+        appState.selectedDate = todayStr;
+        const nextBatchNum = (appState.todayData.batchNumber || 1) + 1;
+
+        showToast(`새로운 날(${todayStr})이 되었습니다! 학습지를 생성합니다.`, "info");
+        await generateDailyContent(todayStr, nextBatchNum);
+      }
+    }
+
+    /* GEMINI AI CONTENT GENERATION WITH STRUCTURED SCHEMA */
+    async function fetchGeminiDailyContent(targetDate, batchNum) {
+      if (!appState.apiKey) return null;
+
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${appState.apiKey}`;
+
+      const systemPrompt = `You are a Korean Hanja (targeting Level 2 certification) and Upper-Intermediate English Educator.
+Generate today's learning pack in JSON format.
+Requirements:
+1. Hanja: 2 compound words (total 4 distinct characters). Target Level 2 Hanja certification progression. Include fun storytelling, radicals, stroke count, exam tips, and example sentence.
+2. English: 1 expression + 5 vocabulary words. Upper-Intermediate to Advanced level. Include phonetic, precise nuance story, collocations, and natural example sentences.`;
+
+      const userPrompt = `Generate Day ${batchNum} study content for date ${targetDate}.`;
+
+      const payload = {
+        contents: [{ parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              date: { type: "STRING" },
+              batchNumber: { type: "INTEGER" },
+              hanja: {
+                type: "ARRAY",
+                items: {
+                  type: "OBJECT",
+                  properties: {
+                    word: { type: "STRING" },
+                    reading: { type: "STRING" },
+                    meaning: { type: "STRING" },
+                    levelTip: { type: "STRING" },
+                    example: { type: "STRING" },
+                    characters: {
+                      type: "ARRAY",
+                      items: {
+                        type: "OBJECT",
+                        properties: {
+                          char: { type: "STRING" },
+                          meaningSound: { type: "STRING" },
+                          radical: { type: "STRING" },
+                          strokes: { type: "INTEGER" },
+                          story: { type: "STRING" }
+                        },
+                        required: ["char", "meaningSound", "radical", "strokes", "story"]
+                      }
+                    }
+                  },
+                  required: ["word", "reading", "meaning", "levelTip", "example", "characters"]
+                }
+              },
+              english: {
+                type: "OBJECT",
+                properties: {
+                  expression: {
+                    type: "OBJECT",
+                    properties: {
+                      phrase: { type: "STRING" },
+                      meaning: { type: "STRING" },
+                      nuance: { type: "STRING" },
+                      examples: { type: "ARRAY", items: { type: "STRING" } }
+                    },
+                    required: ["phrase", "meaning", "nuance", "examples"]
+                  },
+                  words: {
+                    type: "ARRAY",
+                    items: {
+                      type: "OBJECT",
+                      properties: {
+                        word: { type: "STRING" },
+                        phonetic: { type: "STRING" },
+                        meaning: { type: "STRING" },
+                        nuance: { type: "STRING" },
+                        collocation: { type: "STRING" },
+                        example: { type: "STRING" }
+                      },
+                      required: ["word", "phonetic", "meaning", "nuance", "collocation", "example"]
+                    }
+                  }
+                },
+                required: ["expression", "words"]
+              }
+            },
+            required: ["date", "batchNumber", "hanja", "english"]
+          }
+        }
+      };
+
+      try {
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        const jsonText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (jsonText) return JSON.parse(jsonText);
+      } catch (e) {
+        console.warn("Gemini API call failed, falling back...", e);
+      }
+      return null;
+    }
+
+    /* MAIN GENERATE METHOD WITH FALLBACK */
+    async function generateDailyContent(targetDate, batchNum) {
+      let newBatch = await fetchGeminiDailyContent(targetDate, batchNum);
+
+      if (!newBatch) {
+        newBatch = generateFallbackBatch(targetDate, batchNum);
+      }
+
+      appState.todayData = newBatch;
+      if (!appState.history) appState.history = {};
+      appState.history[targetDate] = newBatch;
+      
+      saveState();
+      renderTodayView();
+      renderReviewSection();
+      showToast(`Day ${batchNum} 학습지 생성이 완료되었습니다!`, "success");
+    }
+
+    /* FALLBACK CURRICULUM GENERATOR */
+    function generateFallbackBatch(targetDate, batchNum) {
+      const hanjaPool = [
+        {
+          word: "學問",
+          reading: "학문",
+          meaning: "체계적으로 배워서 얻은 지식이나 학설",
+          levelTip: "2급 쓰기 시험 단골 출제! 問(물어볼 문) 자리에 門(문 문)+口(입 구) 주의",
+          example: "끊임없이 學問(학문)을 탐구하는 자세가 중요하다.",
+          characters: [
+            { char: "學", meaningSound: "배울 학", radical: "子 (아들 자)", strokes: 16, story: "아이(子)가 집(宀) 안에서 스승님이 던져주는 지식의 벼락(爻)을 맞고 손(𦥑)으로 머리를 감싸쥐며 '아하!' 하고 배우는 모습!" },
+            { char: "問", meaningSound: "물어볼 문", radical: "口 (입 구)", strokes: 11, story: "대문(門) 앞에 가서 입(口)을 쩍 벌리고 '이봐요, 안에 누구 계신가요?' 하고 물어보는 모습입니다." }
+          ]
+        },
+        {
+          word: "日月",
+          reading: "일월",
+          meaning: "해와 달, 또는 세월과 날짜",
+          levelTip: "기초 상형자 조합으로 2급 부수 변형 유의",
+          example: "日月(일월)이 유수와 같이 빠르게 흐른다.",
+          characters: [
+            { char: "日", meaningSound: "날/해 일", radical: "日 (해 일)", strokes: 4, story: "창문 너머로 쨍쨍 내리쬐는 둥근 해와 그 한가운데 반짝이는 흑점을 그대로 그린 글자입니다." },
+            { char: "月", meaningSound: "달 월", radical: "月 (달 월)", strokes: 4, story: "밤하늘에 예쁘게 떠 있는 초승달 구름 사이로 달빛이 스며 나오는 모양입니다." }
+          ]
+        },
+        {
+          word: "靑春",
+          reading: "청춘",
+          meaning: "만물이 푸른 봄철, 피어나는 젊음의 시기",
+          levelTip: "靑(푸를 청)과 春(봄 춘) 모두 2급 필수 한자",
+          example: "靑春(청춘)의 열정을 마음에 간직하자.",
+          characters: [
+            { char: "靑", meaningSound: "푸를 청", radical: "靑 (푸를 청)", strokes: 8, story: "새싹이 우물가에서 돋아나 시원하고 푸른 생명력을 보이는 이미지!" },
+            { char: "春", meaningSound: "봄 춘", radical: "日 (해 일)", strokes: 9, story: "따스한 햇살(日) 아래 풀(艸)들이 뿌리를 내리고 돋아나는 봄철의 모습입니다." }
+          ]
+        },
+        {
+          word: "創意",
+          reading: "창의",
+          meaning: "새로운 생각이나 의견을 내놓음",
+          levelTip: "創(비롯할 창)의 부수는 刂(칼 도)로 칼로 조각하는 듯한 창조를 의미",
+          example: "문제 해결을 위해 創意(창의)적인 접근이 필요하다.",
+          characters: [
+            { char: "創", meaningSound: "비롯할 창", radical: "刂 (선칼도방)", strokes: 12, story: "칼(刂)로 원석을 깎아내어 이전까지 없던 새로운 형상을 세상에 빚어내는 창조의 과정!" },
+            { char: "意", meaningSound: "뜻 의", radical: "心 (마음 심)", strokes: 13, story: "마음(心)속 깊은 곳에서 울려 퍼지는 소리(音)와 진실된 뜻!" }
+          ]
+        }
+      ];
+
+      const exprPool = [
+        {
+          phrase: "Hit the nail on the head",
+          meaning: "정곡을 찌르다, 핵심을 정확히 맞히다",
+          nuance: "망치질할 때 못의 머리를 정확히 때려 단번에 쏙 박히는 통쾌한 상황에서 유래!",
+          examples: [
+            "You really hit the nail on the head with that market analysis.",
+            "Her comment during the meeting hit the nail on the head."
+          ]
+        },
+        {
+          phrase: "Bite the bullet",
+          meaning: "이를 악물고 어려움을 견디다, 피할 수 없는 일을 정면 돌파하다",
+          nuance: "마취제 없던 시절 수술할 때 총알(Bullet)을 깨물며 고통을 참던 전쟁터 유래!",
+          examples: [
+            "I hate going to the dentist, but I'll just have to bite the bullet.",
+            "We decided to bite the bullet and invest in new equipment."
+          ]
+        }
+      ];
+
+      const wordPool = [
+        { word: "Articulate", phonetic: "[ɑːrˈtɪkjuleɪt]", meaning: "(생각·감정을) 명확하게 표현하다", nuance: "'아티스트(Art)'처럼 머릿속 생각을 말로 예쁘게 잘 연주해 내는 느낌!", collocation: "articulate a vision / articulate clearly", example: "She was able to articulate her ideas clearly during the presentation." },
+        { word: "Pragmatic", phonetic: "[præɡˈmætɪk]", meaning: "실용적인, 현실적인", nuance: "구름 잡는 소리 대신 당장 작동하는 실용 대책을 선택하는 스타일!", collocation: "pragmatic approach / pragmatic solution", example: "We need a pragmatic strategy rather than an overly theoretical one." },
+        { word: "Resilient", phonetic: "[rɪˈzɪliənt]", meaning: "회복력이 있는, 시련에 금방 튀어 올라오는", nuance: "눌러도 리-스프링처럼 다시 핑! 하고 튀어 오르는 탱탱볼 성질!", collocation: "highly resilient / resilient economy", example: "The business proved to be remarkably resilient during the crisis." },
+        { word: "Scrutinize", phonetic: "[ˈskruːtənaɪz]", meaning: "돋보기 들고 샅샅이 뒤져보다", nuance: "스크루지 할아버지가 장부 단 1원도 안 틀리게 눈을 가늘게 뜨고 검토하는 모양!", collocation: "scrutinize details / scrutinize data", example: "Regulators will scrutinize the merger proposal carefully." },
+        { word: "Substantial", phonetic: "[səbˈstænʃl]", meaning: "묵직하게 상당한, 실질적인", nuance: "밑에(Sub) 묵직하게 서 있는(Stand) 당당하고 단단한 양감!", collocation: "substantial progress / substantial amount", example: "The company made substantial improvements in customer satisfaction." },
+        { word: "Meticulous", phonetic: "[məˈtɪkjələs]", meaning: "꼼꼼한, 세심한", nuance: "하나도 빠짐없이 차곡차곡 챙기는 완벽주의자의 섬세함!", collocation: "meticulous attention / meticulous planning", example: "He paid meticulous attention to every single detail in the report." },
+        { word: "Versatile", phonetic: "[ˈvɜːrsətl]", meaning: "다재다능한, 용도가 다양한", nuance: "어디에 가져다 놓아도 찰떡같이 변신해 제 역할을 해내는 만능엔터테이너!", collocation: "versatile tool / highly versatile", example: "This multi-tool is extremely versatile for outdoor camping." }
+      ];
+
+      const hIdx1 = (batchNum * 2) % hanjaPool.length;
+      const hIdx2 = (batchNum * 2 + 1) % hanjaPool.length;
+      const eIdx = batchNum % exprPool.length;
+
+      const selectedWords = [];
+      for (let i = 0; i < 5; i++) {
+        selectedWords.push(wordPool[(batchNum * 5 + i) % wordPool.length]);
+      }
+
+      return {
+        date: targetDate,
+        batchNumber: batchNum,
+        hanja: [hanjaPool[hIdx1], hanjaPool[hIdx2]],
+        english: {
+          expression: exprPool[eIdx],
+          words: selectedWords
+        }
+      };
+    }
+
+    /* RENDERING TODAY VIEW WITH DATE NAVIGATION SUPPORT */
+    function renderTodayView() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const curDate = appState.selectedDate || todayStr;
+      
+      // Update Date Picker Controls
+      const datePicker = document.getElementById('datePickerInput');
+      if (datePicker) datePicker.value = curDate;
+
+      const btnGoToday = document.getElementById('btnGoToday');
+      if (btnGoToday) {
+        if (curDate === todayStr) btnGoToday.classList.add('hidden');
+        else btnGoToday.classList.remove('hidden');
+      }
+
+      const btnNextDate = document.getElementById('btnNextDate');
+      if (btnNextDate) {
+        if (curDate >= todayStr) btnNextDate.disabled = true;
+        else btnNextDate.disabled = false;
+      }
+
+      // Fetch data for selected date (from history or todayData)
+      let data = null;
+      if (appState.history && appState.history[curDate]) {
+        data = appState.history[curDate];
+      } else if (curDate === todayStr) {
+        data = appState.todayData || DEFAULT_DAY1_DATA;
+      }
+
+      const hanjaContainer = document.getElementById('hanjaCardsContainer');
+      const exprContainer = document.getElementById('englishExprContainer');
+      const wordsContainer = document.getElementById('englishWordsContainer');
+
+      // Empty State for past date without record
+      if (!data) {
+        document.getElementById('todayBatchBadge').innerText = `기록 없음`;
+        document.getElementById('todayDateBadge').innerText = curDate;
+
+        hanjaContainer.innerHTML = `
+          <div class="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 text-center space-y-3">
+            <i class="fa-solid fa-calendar-xmark text-4xl text-slate-300 dark:text-slate-600"></i>
+            <h4 class="font-bold text-base">해당 날짜(${curDate})의 학습 기록이 없습니다.</h4>
+            <p class="text-xs text-slate-400">상단 날짜 조작 바를 통해 학습 기록이 있는 날짜로 이동하거나 오늘 학습으로 돌아가세요.</p>
+            <button onclick="goToday()" class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md">오늘 학습으로 이동</button>
+          </div>
+        `;
+        exprContainer.innerHTML = '';
+        wordsContainer.innerHTML = '';
+        return;
+      }
+
+      document.getElementById('todayBatchBadge').innerText = `Day ${data.batchNumber || 1}`;
+      document.getElementById('todayDateBadge').innerText = data.date || curDate;
+
+      // 1. Hanja Cards
+      hanjaContainer.innerHTML = data.hanja.map((h, idx) => `
+        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+          <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-2xl font-black text-rose-600 dark:text-rose-400 tracking-wider">${h.word}</span>
+                <span class="text-sm font-bold text-slate-500 dark:text-slate-400">(${h.reading})</span>
+              </div>
+              <p class="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-1">${h.meaning}</p>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800">
+              단어 ${idx + 1}
+            </span>
+          </div>
+
+          <!-- Characters Breakdown -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            ${h.characters.map(c => `
+              <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-3.5 border border-slate-200/60 dark:border-slate-800 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-2xl font-black text-slate-800 dark:text-slate-100">${c.char}</span>
+                    <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">${c.meaningSound}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-600 dark:text-slate-300 space-x-1">
+                    <span>부수: <b>${c.radical}</b></span>
+                    <span>•</span>
+                    <span>${c.strokes}획</span>
+                  </div>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                  <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i>${c.story}
+                </p>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- Exam Tip & Example -->
+          <div class="bg-amber-50/60 dark:bg-amber-950/30 rounded-xl p-3 border border-amber-200/60 dark:border-amber-900/40 text-xs space-y-1">
+            <p class="text-amber-800 dark:text-amber-300 font-bold flex items-center gap-1">
+              <i class="fa-solid fa-certificate text-amber-500"></i> 2급 시험 팁: ${h.levelTip}
+            </p>
+            <p class="text-slate-600 dark:text-slate-300 italic">" ${h.example} "</p>
+          </div>
+        </div>
+      `).join('');
+
+      // 2. English Expression
+      const expr = data.english.expression;
+      exprContainer.innerHTML = `
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/90 rounded-2xl p-5 border border-blue-200/80 dark:border-slate-700 shadow-sm space-y-3">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white">오늘의 핵심 표현</span>
+              <h4 class="text-xl font-black text-blue-950 dark:text-blue-100 mt-1 flex items-center gap-2">
+                <span>"${expr.phrase}"</span>
+                <button onclick="speakText('${expr.phrase}')" class="text-blue-500 hover:text-blue-700 text-sm">
+                  <i class="fa-solid fa-volume-high"></i>
+                </button>
+              </h4>
+              <p class="text-xs font-bold text-blue-800 dark:text-blue-300 mt-0.5">${expr.meaning}</p>
+            </div>
+          </div>
+
+          <p class="text-xs text-slate-700 dark:text-slate-300 bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-blue-100 dark:border-slate-700 leading-relaxed">
+            <i class="fa-solid fa-masks-theater text-indigo-500 mr-1.5"></i><strong>원어민 뉘앙스:</strong> ${expr.nuance}
+          </p>
+
+          <div class="space-y-1 text-xs">
+            <p class="font-bold text-slate-700 dark:text-slate-300">실전 예문:</p>
+            ${expr.examples.map(ex => `<p class="text-slate-600 dark:text-slate-300 italic pl-2 border-l-2 border-indigo-400">• ${ex}</p>`).join('')}
+          </div>
+        </div>
+      `;
+
+      // 3. English Words
+      wordsContainer.innerHTML = data.english.words.map((w, idx) => `
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 shadow-sm space-y-2">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-base font-bold text-indigo-600 dark:text-indigo-400">${w.word}</span>
+              <span class="text-xs text-slate-600 dark:text-slate-300">${w.phonetic}</span>
+              <button onclick="speakText('${w.word}')" class="text-slate-600 hover:text-indigo-600 text-xs">
+                <i class="fa-solid fa-volume-high"></i>
+              </button>
+            </div>
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">${w.meaning}</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg text-slate-600 dark:text-slate-300">
+              <span class="font-bold text-indigo-500">뉘앙스:</span> ${w.nuance}
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-900 p-2 rounded-lg text-slate-600 dark:text-slate-300">
+              <span class="font-bold text-emerald-500">짝꿍표현:</span> ${w.collocation}
+            </div>
+          </div>
+          
+          <p class="text-xs text-slate-600 dark:text-slate-300 italic pt-1 border-t border-slate-100 dark:border-slate-700">
+            "${w.example}"
+          </p>
+        </div>
+      `).join('');
+    }
+
+    /* DATE SWITCHING LOGIC */
+    function changeSelectedDate(deltaDays) {
+      const curStr = appState.selectedDate || new Date().toISOString().split('T')[0];
+      const curDate = new Date(curStr);
+      curDate.setDate(curDate.getDate() + deltaDays);
+      const nextStr = curDate.toISOString().split('T')[0];
+      setSelectedDate(nextStr);
+    }
+
+    function onDatePickerChange(e) {
+      if (e.target.value) {
+        setSelectedDate(e.target.value);
+      }
+    }
+
+    function goToday() {
+      const todayStr = new Date().toISOString().split('T')[0];
+      setSelectedDate(todayStr);
+    }
+
+    function setSelectedDate(dateStr) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      if (dateStr > todayStr) return; // Cannot navigate to future
+      appState.selectedDate = dateStr;
+      saveState();
+      renderTodayView();
+    }
+
+    /* QUIZ SECTION ENGINE */
+    function startQuiz() {
+      const data = appState.todayData || DEFAULT_DAY1_DATA;
+      const questions = [];
+
+      // Add Hanja questions
+      data.hanja.forEach(h => {
+        questions.push({
+          type: 'HANJA',
+          prompt: `한자어 '${h.word}'의 올바른 한글 읽기와 뜻은 무엇일까요?`,
+          answer: `${h.reading} (${h.meaning})`,
+          options: shuffleArray([
+            `${h.reading} (${h.meaning})`,
+            `교목 (학교를 상징하는 나무)`,
+            `청춘 (만물이 푸른 봄철)`,
+            `학습 (배우고 익힘)`
+          ])
+        });
+      });
+
+      // Add English Word questions
+      data.english.words.forEach(w => {
+        questions.push({
+          type: 'ENG_WORD',
+          prompt: `빈칸에 알맞은 영단어: "${w.example.replace(new RegExp(w.word, 'gi'), '_______')}"`,
+          answer: w.word,
+          options: shuffleArray([w.word, "Meticulous", "Pragmatic", "Resilient", "Versatile"].filter((v, i, a) => a.indexOf(v) === i))
+        });
+      });
+
+      appState.quizQuestions = questions;
+      appState.currentQuizIndex = 0;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      const container = document.getElementById('quizContentArea');
+      const questions = appState.quizQuestions || [];
+
+      if (appState.currentQuizIndex >= questions.length) {
+        container.innerHTML = `
+          <div class="text-center py-8 space-y-4">
+            <div class="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mx-auto">
+              <i class="fa-solid fa-trophy"></i>
+            </div>
+            <h4 class="text-xl font-bold">오늘의 퀴즈 완료!</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300">복습장으로 이동하여 플래시카드로 완벽히 마무리해보세요.</p>
+            <button onclick="startQuiz()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition">
+              퀴즈 다시 풀기
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      const q = questions[appState.currentQuizIndex];
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <span>문제 ${appState.currentQuizIndex + 1} / ${questions.length}</span>
+            <span class="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">${q.type}</span>
+          </div>
+
+          <h4 class="text-base font-bold leading-snug">${q.prompt}</h4>
+
+          <div class="grid grid-cols-1 gap-2 pt-2">
+            ${q.options.map(opt => `
+              <button onclick="submitAnswer('${opt.replace(/'/g, "\\'")}', '${q.answer.replace(/'/g, "\\'")}')" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-950 border border-slate-200 dark:border-slate-700 text-left text-xs font-bold transition flex items-center justify-between group">
+                <span>${opt}</span>
+                <i class="fa-solid fa-chevron-right text-slate-300 group-hover:text-indigo-500"></i>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function submitAnswer(selected, correct) {
+      appState.quizStats.total++;
+      if (selected === correct) {
+        appState.quizStats.score++;
+        showToast("정답입니다! 👏", "success");
+      } else {
+        showToast(`아쉽네요! 정답: ${correct}`, "error");
+      }
+      document.getElementById('quizScoreBadge').innerText = `점수: ${appState.quizStats.score} / ${appState.quizStats.total}`;
+      appState.currentQuizIndex++;
+      renderQuizQuestion();
+    }
+
+    /* FLASHCARD REVIEW ENGINE */
+    function renderReviewSection() {
+      const queue = appState.reviewQueue || [];
+      document.getElementById('reviewQueueCount').innerText = `남은 카드: ${queue.length}`;
+
+      const container = document.getElementById('flashcardArea');
+
+      if (queue.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-10 space-y-3">
+            <i class="fa-solid fa-circle-check text-4xl text-emerald-500"></i>
+            <h4 class="text-base font-bold">복습할 카드가 없습니다!</h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300">오늘의 학습을 진행하면 저녁 복습 카드가 자동으로 생깁니다.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const current = queue[0];
+      container.innerHTML = `
+        <div class="space-y-4">
+          <!-- Flip Card -->
+          <div onclick="toggleCardFlip()" class="perspective-1000 w-full h-64 cursor-pointer">
+            <div id="flashcardInner" class="relative w-full h-full duration-500 transform-style-3d bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-xl flex flex-col items-center justify-center text-center space-y-3">
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md">터치해서 뒷면 보기</span>
+              <h3 class="text-3xl font-black">${current.title}</h3>
+              <p class="text-xs text-indigo-100">${current.sub || ''}</p>
+            </div>
+          </div>
+
+          <!-- Rating Buttons -->
+          <div class="flex gap-2">
+            <button onclick="rateFlashcard('EASY')" class="flex-1 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-md transition">
+              😊 쉬움 (완료)
+            </button>
+            <button onclick="rateFlashcard('HARD')" class="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md transition">
+              🤔 다시 보기
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    let isFlipped = false;
+    function toggleCardFlip() {
+      const inner = document.getElementById('flashcardInner');
+      const queue = appState.reviewQueue || [];
+      if (!queue.length) return;
+
+      const current = queue[0];
+      isFlipped = !isFlipped;
+
+      if (isFlipped) {
+        inner.classList.remove('from-indigo-500', 'to-purple-600');
+        inner.classList.add('from-slate-800', 'to-slate-900');
+        inner.innerHTML = `
+          <div class="space-y-2">
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300">정답 & 뉘앙스</span>
+            <h4 class="text-xl font-bold text-amber-300">${current.meaning}</h4>
+            <p class="text-xs text-slate-300 leading-relaxed">${current.detail || ''}</p>
+          </div>
+        `;
+      } else {
+        renderReviewSection();
+      }
+    }
+
+    function rateFlashcard(rating) {
+      isFlipped = false;
+      if (rating === 'EASY') {
+        appState.reviewQueue.shift();
+        showToast("카드 학습 완료!", "success");
+      } else {
+        const item = appState.reviewQueue.shift();
+        appState.reviewQueue.push(item); // Move to back of queue
+        showToast("다음에 다시 등장합니다.", "info");
+      }
+      saveState();
+      renderReviewSection();
+    }
+
+    /* ARCHIVE SECTION */
+    function renderArchiveSection() {
+      const query = (document.getElementById('archiveSearchInput')?.value || '').toLowerCase();
+      const filter = document.getElementById('archiveFilterSelect')?.value || 'ALL';
+
+      let items = appState.archive || [];
+
+      // Filter by type
+      if (filter === 'HANJA') items = items.filter(i => i.type === 'HANJA');
+      if (filter === 'EXPR') items = items.filter(i => i.type === 'EXPR');
+      if (filter === 'WORD') items = items.filter(i => i.type === 'WORD');
+
+      // Filter by query
+      if (query) {
+        items = items.filter(i => 
+          (i.title && i.title.toLowerCase().includes(query)) ||
+          (i.meaning && i.meaning.toLowerCase().includes(query))
+        );
+      }
+
+      const container = document.getElementById('archiveItemsList');
+      if (items.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full text-center py-10 text-slate-400 text-xs">
+            보관된 단어가 없습니다.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = items.map(item => `
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-indigo-600 dark:text-indigo-400 text-sm">${item.title}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-500">${item.type}</span>
+          </div>
+          <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">${item.meaning}</p>
+          <p class="text-[11px] text-slate-400 line-clamp-2">${item.detail || ''}</p>
+        </div>
+      `).join('');
+    }
+
+    /* UTILITY FUNCTIONS */
+    function flattenDataToArchive(data) {
+      if (!data) return [];
+      const list = [];
+      
+      // Hanja
+      data.hanja?.forEach(h => {
+        list.push({ id: 'hanja_' + h.word, type: 'HANJA', title: h.word, sub: h.reading, meaning: h.meaning, detail: h.levelTip });
+      });
+
+      // Expression
+      if (data.english?.expression) {
+        const e = data.english.expression;
+        list.push({ id: 'expr_' + e.phrase, type: 'EXPR', title: e.phrase, meaning: e.meaning, detail: e.nuance });
+      }
+
+      // Words
+      data.english?.words?.forEach(w => {
+        list.push({ id: 'word_' + w.word, type: 'WORD', title: w.word, sub: w.phonetic, meaning: w.meaning, detail: w.nuance });
+      });
+
+      return list;
+    }
+
+    function switchTab(tab) {
+      ['today', 'quiz', 'review', 'archive'].forEach(t => {
+        const view = document.getElementById(`view${t.charAt(0).toUpperCase() + t.slice(1)}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (t === tab) {
+          view.classList.remove('hidden');
+          nav.classList.add('text-indigo-600', 'dark:text-indigo-400', 'font-bold');
+          nav.classList.remove('text-slate-600', 'dark:text-slate-300', 'font-semibold');
+        } else {
+          view.classList.add('hidden');
+          nav.classList.remove('text-indigo-600', 'dark:text-indigo-400', 'font-bold');
+          nav.classList.add('text-slate-600', 'dark:text-slate-300', 'font-semibold');
+        }
+      });
+
+      appState.activeTab = tab;
+      if (tab === 'quiz') startQuiz();
+      if (tab === 'review') renderReviewSection();
+      if (tab === 'archive') renderArchiveSection();
+    }
+
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMessage');
+      toastMsg.innerText = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 2500);
+    }
+
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function markTodayComplete() {
+      if (!appState.todayData) return;
+      const items = flattenDataToArchive(appState.todayData);
+      items.forEach(item => {
+        if (!appState.archive.some(a => a.id === item.id)) appState.archive.push(item);
+        if (!appState.reviewQueue.some(r => r.id === item.id)) appState.reviewQueue.push(item);
+      });
+      saveState();
+      showToast("오늘의 학습이 완료 및 저녁 복습장에 추가되었습니다!", "success");
+    }
+
+    /* MODAL CONTROLS */
+    function openSettingsModal() {
+      document.getElementById('inputApiKey').value = appState.apiKey || '';
+      document.getElementById('modalSettings').classList.remove('hidden');
+    }
+    function closeSettingsModal() { document.getElementById('modalSettings').classList.add('hidden'); }
+    
+    function saveSettings() {
+      appState.apiKey = document.getElementById('inputApiKey').value.trim();
+      saveState();
+      closeSettingsModal();
+      showToast("설정이 저장되었습니다.", "success");
+    }
+
+    function openAiModal() { document.getElementById('modalAi').classList.remove('hidden'); }
+    function closeAiModal() { document.getElementById('modalAi').classList.add('hidden'); }
+
+    async function triggerManualAiGenerate() {
+      const spinner = document.getElementById('aiLoadingSpinner');
+      const actions = document.getElementById('aiModalActions');
+      spinner.classList.remove('hidden');
+      actions.classList.add('hidden');
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      const batchNum = (appState.todayData?.batchNumber || 1) + 1;
+
+      await generateDailyContent(todayStr, batchNum);
+
+      spinner.classList.add('hidden');
+      actions.classList.remove('hidden');
+      closeAiModal();
+    }
+
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme_mode', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    }
+
+    function resetAllData() {
+      if (confirm("모든 학습 기록을 초기화하시겠습니까?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        location.reload();
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          appState = { ...appState, ...JSON.parse(saved) };
+        } catch (e) {
+          console.error("Failed to parse local state", e);
+        }
+      }
+    }
+
+    window.onload = async function() {
+      const savedTheme = localStorage.getItem('theme_mode');
+      if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+
+      const now = new Date();
+      document.getElementById('headerDateText').innerText = now.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+
+      loadState();
+      await checkAndHandleDateChange();
+
+      document.getElementById('streakDaysCount').innerText = appState.streak || 1;
+
+      renderTodayView();
+      renderReviewSection();
+    };
+  </script>
+</body>
+</html>
