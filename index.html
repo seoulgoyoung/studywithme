@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N분의 1 - 스마트 여행 정산 가계부</title>
+    <title>N분의 1 - 실시간 공동편집 여행 가계부</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -20,22 +20,103 @@
             scrollbar-width: none;
         }
     </style>
+    <!-- Firebase SDK Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration setup
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            // Fallback for standalone preview if needed
+            apiKey: "",
+            authDomain: "",
+            projectId: "",
+            storageBucket: "",
+            messagingSenderId: "",
+            appId: ""
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'travel-split-app';
+
+        window.fb = {
+            auth,
+            db,
+            appId,
+            doc,
+            setDoc,
+            onSnapshot,
+            currentUser: null,
+            unsubscribeSync: null
+        };
+
+        // Authenticate User FIRST
+        async function initAuth() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (err) {
+                console.error("Auth initialization error:", err);
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.fb.currentUser = user;
+                // Check URL for room code parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const roomIdFromUrl = urlParams.get('room');
+                
+                if (roomIdFromUrl) {
+                    window.joinRoomById(roomIdFromUrl.toUpperCase());
+                } else {
+                    // Try auto load or prompt setup
+                    window.initAppSession();
+                }
+            }
+        });
+
+        initAuth();
+    </script>
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen pb-20 md:pb-10">
 
     <!-- Header -->
     <header class="bg-indigo-600 text-white sticky top-0 z-30 shadow-md">
         <div class="max-w-2xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-plane-departure text-xl text-indigo-200"></i>
-                <h1 class="text-lg font-bold tracking-tight" id="tripTitleDisplay">우리의 멋진 여행</h1>
-                <button onclick="editTripTitle()" class="text-indigo-200 hover:text-white text-xs p-1">
-                    <i class="fa-solid fa-pen"></i>
+            <div class="flex items-center gap-2 overflow-hidden">
+                <i class="fa-solid fa-plane-departure text-xl text-indigo-200 shrink-0"></i>
+                <div class="truncate">
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="text-base font-bold tracking-tight truncate" id="tripTitleDisplay">우리의 멋진 여행</h1>
+                        <button onclick="editTripTitle()" class="text-indigo-200 hover:text-white text-xs p-1">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </div>
+                    <!-- Sync Indicator -->
+                    <div class="flex items-center gap-1.5 text-[11px] text-indigo-200">
+                        <span id="syncStatusBadge" class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-indigo-700/60 font-mono">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span id="roomCodeText">로딩 중...</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-1.5">
+                <button onclick="copyRoomInviteLink()" class="text-xs bg-indigo-500 hover:bg-indigo-700 text-white px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1 shrink-0 font-medium">
+                    <i class="fa-solid fa-user-plus"></i> 친구 초대
+                </button>
+                <button onclick="openRoomModal()" class="text-xs bg-indigo-800/60 hover:bg-indigo-800 text-indigo-100 p-1.5 rounded-lg transition-colors shrink-0">
+                    <i class="fa-solid fa-gear"></i>
                 </button>
             </div>
-            <button onclick="loadSampleData()" class="text-xs bg-indigo-500 hover:bg-indigo-700 text-indigo-100 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 예시 데이터
-            </button>
         </div>
     </header>
 
@@ -69,12 +150,12 @@
 
         <!-- TAB 1: Expenses Section -->
         <section id="tabExpenses" class="space-block">
-            <!-- Add Expense Button / Quick Card -->
+            <!-- Add Expense Button -->
             <button onclick="openExpenseModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-2xl shadow-lg shadow-indigo-100 transition-all flex items-center justify-center gap-2 mb-5">
                 <i class="fa-solid fa-plus text-lg"></i> 새 지출 등록하기
             </button>
 
-            <!-- Filter & Search -->
+            <!-- Filter Categories -->
             <div class="flex gap-2 mb-4 overflow-x-auto pb-1 hide-scrollbar" id="categoryFilterContainer">
                 <button onclick="filterCategory('ALL')" class="cat-filter-btn active bg-slate-800 text-white text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">전체</button>
                 <button onclick="filterCategory('식비')" class="cat-filter-btn bg-white text-slate-600 border border-slate-200 text-xs px-3 py-1.5 rounded-full font-medium whitespace-nowrap">🍔 식비</button>
@@ -92,39 +173,38 @@
             <div id="emptyExpenseState" class="hidden text-center py-12 text-slate-400 bg-white rounded-2xl border border-dashed border-slate-200">
                 <i class="fa-solid fa-receipt text-4xl mb-3 text-slate-300"></i>
                 <p class="text-sm font-medium">아직 등록된 지출이 없습니다.</p>
-                <p class="text-xs text-slate-400 mt-1">여행 중 사용한 금액을 등록해보세요!</p>
+                <p class="text-xs text-slate-400 mt-1">친구들과 사용한 지출을 실시간으로 등록해보세요!</p>
             </div>
         </section>
 
         <!-- TAB 2: Settlement Section -->
         <section id="tabSettlement" class="hidden space-y-5">
-            <!-- Share Summary Action -->
             <div class="flex justify-between items-center bg-indigo-50 border border-indigo-100 p-4 rounded-2xl">
                 <div>
-                    <h3 class="font-bold text-indigo-900 text-sm">정산 내역을 공유해보세요</h3>
-                    <p class="text-xs text-indigo-600 mt-0.5">카카오톡이나 메신저로 바로 전달할 수 있습니다.</p>
+                    <h3 class="font-bold text-indigo-900 text-sm">정산 내역 카톡 공유</h3>
+                    <p class="text-xs text-indigo-600 mt-0.5">누가 누구에게 얼마 보낼지 텍스트로 요약복사합니다.</p>
                 </div>
                 <button onclick="copySettlementSummary()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 shadow-sm">
                     <i class="fa-solid fa-share-nodes"></i> 내역 복사
                 </button>
             </div>
 
-            <!-- Minimum Transactions (Who pays Whom) -->
+            <!-- Minimum Transactions -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-800 mb-1 flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-right-arrow-left text-indigo-500"></i> 추천 정산 방식 (최소 송금)
+                    <i class="fa-solid fa-arrow-right-arrow-left text-indigo-500"></i> 스마트 최소 송금 경로
                 </h3>
-                <p class="text-xs text-slate-400 mb-4">복잡하게 따로 보낼 필요 없이 아래대로 송금하면 깔끔하게 정산됩니다.</p>
+                <p class="text-xs text-slate-400 mb-4">복잡한 송금 관계를 계산해 최소 횟수 송금으로 연결해줍니다.</p>
                 
                 <div id="settlementTransList" class="space-y-2.5">
                     <!-- JS Populated -->
                 </div>
             </div>
 
-            <!-- Individual Balance Breakdown -->
+            <!-- Individual Balances -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-user-check text-indigo-500"></i> 멤버별 개인 정산 현황
+                    <i class="fa-solid fa-user-check text-indigo-500"></i> 멤버별 정산 현황
                 </h3>
                 <div id="memberBalanceList" class="space-y-3">
                     <!-- JS Populated -->
@@ -135,17 +215,18 @@
         <!-- TAB 3: Members Section -->
         <section id="tabMembers" class="hidden space-y-4">
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <h3 class="font-bold text-slate-800 mb-3">여행 참여 멤버</h3>
+                <h3 class="font-bold text-slate-800 mb-1">여행 참여 멤버</h3>
+                <p class="text-xs text-slate-400 mb-3">함께 여행에 참여 중인 친구들의 이름입니다.</p>
                 
                 <!-- Add Member Form -->
                 <div class="flex gap-2 mb-4">
-                    <input type="text" id="newMemberInput" placeholder="멤버 이름 (예: 민수)" class="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                    <input type="text" id="newMemberInput" placeholder="멤버 이름 (예: 지은)" class="flex-1 px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
                     <button onclick="addMember()" class="bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm px-4 rounded-xl transition-colors">
                         추가
                     </button>
                 </div>
 
-                <!-- Member Chips/List -->
+                <!-- Member Chips -->
                 <div id="memberChipList" class="space-y-2">
                     <!-- JS Populated -->
                 </div>
@@ -154,7 +235,47 @@
 
     </main>
 
-    <!-- Expense Modal (Add/Edit) -->
+    <!-- Room Management / Shared Room Modal -->
+    <div id="roomModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-lg text-slate-800">공동편집 방 설정</h3>
+                <button onclick="closeRoomModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3">
+                <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl">
+                    <p class="text-xs font-semibold text-indigo-900">현재 방 코드</p>
+                    <div class="flex justify-between items-center mt-1">
+                        <span id="currentRoomCodeLabel" class="text-lg font-black text-indigo-700 font-mono">---</span>
+                        <button onclick="copyRoomInviteLink()" class="text-xs bg-indigo-600 text-white px-2.5 py-1.5 rounded-lg font-bold">
+                            초대 코드 복사
+                        </button>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-100 pt-3">
+                    <label class="block text-xs font-bold text-slate-500 mb-1">다른 여행 방 코드로 입장하기</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="roomCodeInput" placeholder="예: TRIP-ABCD" class="flex-1 px-3 py-2 text-sm rounded-xl border border-slate-200 uppercase font-mono">
+                        <button onclick="joinRoomFromInput()" class="bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl">
+                            참가하기
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="createNewRoom()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-colors">
+                        ➕ 새 여행 가계부 방 만들기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Modal -->
     <div id="expenseModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b border-slate-100 pb-3">
@@ -168,7 +289,7 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-500 mb-1">사용 내역 / 항목명 *</label>
-                <input type="text" id="modalTitleInput" placeholder="예: 해산물 식당, 택시비" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
+                <input type="text" id="modalTitleInput" placeholder="예: 점심 해산물 식당, 택시비" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:outline-none focus:border-indigo-500">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -222,32 +343,82 @@
         <span id="toastMsg">복사되었습니다.</span>
     </div>
 
-    <!-- App State Script -->
     <script>
-        // State
+        // Default Local State Object
         let state = {
-            tripTitle: "제주도 3박4일 여행",
+            roomId: "",
+            tripTitle: "우리의 우정 여행",
             members: ["민수", "지은", "현우", "유진"],
             expenses: [],
             selectedCategory: 'ALL'
         };
 
-        // Initialize App
-        window.onload = function() {
-            // Load saved data or set defaults
-            loadState();
-            renderAll();
+        // Initialize App Session with Room ID
+        window.initAppSession = function() {
+            let savedRoom = localStorage.getItem('trip_room_id');
+            if (!savedRoom) {
+                savedRoom = 'TRIP-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            }
+            window.joinRoomById(savedRoom);
         };
 
-        function saveState() {
-            // In-memory application state maintained
+        // Subscribe to Cloud Firestore Room Data
+        window.joinRoomById = function(roomId) {
+            if (!roomId) return;
+            state.roomId = roomId.toUpperCase();
+            localStorage.setItem('trip_room_id', state.roomId);
+
+            document.getElementById('roomCodeText').innerText = state.roomId;
+            document.getElementById('currentRoomCodeLabel').innerText = state.roomId;
+
+            // Update URL without reload
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('room', state.roomId);
+            window.history.replaceState({}, '', newUrl.toString());
+
+            // Unsubscribe existing snapshot listener if any
+            if (window.fb.unsubscribeSync) {
+                window.fb.unsubscribeSync();
+            }
+
+            // Setup Firestore Listener
+            const roomRef = window.fb.doc(window.fb.db, 'artifacts', window.fb.appId, 'public', 'data', 'rooms', state.roomId);
+            
+            window.fb.unsubscribeSync = window.fb.onSnapshot(roomRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    state.tripTitle = data.tripTitle || "우리의 여행";
+                    state.members = Array.isArray(data.members) ? data.members : [];
+                    state.expenses = Array.isArray(data.expenses) ? data.expenses : [];
+                } else {
+                    // Initialize empty room doc if doesn't exist
+                    pushStateToCloud();
+                }
+                renderAll();
+            }, (error) => {
+                console.error("Firestore sync error:", error);
+                showToast("실시간 동기화 연결 중 오류 발생");
+            });
+        };
+
+        // Push State changes to Cloud
+        async function pushStateToCloud() {
+            if (!state.roomId) return;
+            try {
+                const roomRef = window.fb.doc(window.fb.db, 'artifacts', window.fb.appId, 'public', 'data', 'rooms', state.roomId);
+                await window.fb.setDoc(roomRef, {
+                    tripTitle: state.tripTitle,
+                    members: state.members,
+                    expenses: state.expenses,
+                    updatedAt: Date.now()
+                });
+            } catch (err) {
+                console.error("Failed to push data to Cloud:", err);
+                showToast("데이터 저장 실패");
+            }
         }
 
-        function loadState() {
-            // Initial render state ready
-        }
-
-        // Render Master
+        // Render UI Elements
         function renderAll() {
             document.getElementById('tripTitleDisplay').innerText = state.tripTitle;
             document.getElementById('memberCount').innerText = state.members.length;
@@ -259,7 +430,6 @@
             renderSettlement();
         }
 
-        // Switch Tabs
         function switchTab(tabName) {
             const tabs = ['Expenses', 'Settlement', 'Members'];
             tabs.forEach((tab, index) => {
@@ -276,7 +446,6 @@
             });
         }
 
-        // Stats Update
         function updateStats() {
             const total = state.expenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
             const perPerson = state.members.length > 0 ? Math.round(total / state.members.length) : 0;
@@ -285,7 +454,6 @@
             document.getElementById('statPerPersonAmount').innerText = perPerson.toLocaleString() + '원';
         }
 
-        // Expenses List Rendering
         function renderExpenseList() {
             const listEl = document.getElementById('expenseList');
             const emptyEl = document.getElementById('emptyExpenseState');
@@ -303,7 +471,6 @@
                 emptyEl.classList.add('hidden');
             }
 
-            // Sort newest first
             const sorted = [...filtered].reverse();
 
             sorted.forEach(exp => {
@@ -350,7 +517,6 @@
             });
         }
 
-        // Category Filter Function
         function filterCategory(cat) {
             state.selectedCategory = cat;
             document.querySelectorAll('.cat-filter-btn').forEach(btn => {
@@ -363,23 +529,19 @@
             renderExpenseList();
         }
 
-        // Modal Handlers
         function openExpenseModal(expenseId = null) {
             if (state.members.length === 0) {
-                showToast("먼저 여행 멤버를 등록해주세요!");
+                showToast("먼저 여행 멤버를 1명 이상 등록해주세요!");
                 switchTab('members');
                 return;
             }
 
             const modal = document.getElementById('expenseModal');
             const payerSelect = document.getElementById('modalPayerSelect');
-            const participantsContainer = document.getElementById('modalParticipantsContainer');
             
-            // Populate Payer Select
             payerSelect.innerHTML = state.members.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
 
             if (expenseId) {
-                // Edit mode
                 const exp = state.expenses.find(e => e.id === expenseId);
                 document.getElementById('modalTitle').innerText = "지출 수정하기";
                 document.getElementById('modalExpenseId').value = exp.id;
@@ -390,14 +552,13 @@
 
                 renderParticipantCheckboxes(exp.participants);
             } else {
-                // Add mode
                 document.getElementById('modalTitle').innerText = "지출 등록하기";
                 document.getElementById('modalExpenseId').value = "";
                 document.getElementById('modalTitleInput').value = "";
                 document.getElementById('modalAmountInput').value = "";
                 document.getElementById('modalCategorySelect').value = "식비";
                 
-                renderParticipantCheckboxes(state.members); // All selected by default
+                renderParticipantCheckboxes(state.members);
             }
 
             modal.classList.remove('hidden');
@@ -448,13 +609,11 @@
             }
 
             if (id) {
-                // Update
                 const index = state.expenses.findIndex(e => e.id === id);
                 if (index !== -1) {
                     state.expenses[index] = { id, title, amount, category, payer, participants };
                 }
             } else {
-                // New
                 const newExpense = {
                     id: Date.now().toString(),
                     title,
@@ -467,19 +626,16 @@
             }
 
             closeExpenseModal();
-            saveState();
-            renderAll();
-            showToast("지출이 저장되었습니다.");
+            pushStateToCloud();
+            showToast("지출이 공유 가계부에 저장되었습니다.");
         }
 
         function deleteExpense(id) {
             state.expenses = state.expenses.filter(e => e.id !== id);
-            saveState();
-            renderAll();
+            pushStateToCloud();
             showToast("지출 내역이 삭제되었습니다.");
         }
 
-        // Member Management
         function renderMembers() {
             const listEl = document.getElementById('memberChipList');
             listEl.innerHTML = '';
@@ -512,29 +668,25 @@
 
             state.members.push(name);
             input.value = '';
-            saveState();
-            renderAll();
-            showToast(`${name} 님이 추가되었습니다.`);
+            pushStateToCloud();
+            showToast(`${name} 님이 멤버로 추가되었습니다.`);
         }
 
         function removeMember(name) {
-            // Check if member is used in expenses
             const used = state.expenses.some(e => e.payer === name || e.participants.includes(name));
             if (used) {
-                if (!confirm(`${name} 님의 기존 지출 기록이 있습니다. 멤버에서 제외할까요?`)) {
+                if (!confirm(`${name} 님의 지출 내역이 포함되어 있습니다. 정말 삭제할까요?`)) {
                     return;
                 }
             }
 
             state.members = state.members.filter(m => m !== name);
-            saveState();
-            renderAll();
-            showToast(`${name} 님이 삭제되었습니다.`);
+            pushStateToCloud();
+            showToast(`${name} 님이 제외되었습니다.`);
         }
 
-        // Settlement Algorithm & Render
+        // Settlement Algo
         function calculateSettlement() {
-            // Calculate balances
             const balances = {};
             const paidTotals = {};
             const owedTotals = {};
@@ -561,9 +713,8 @@
                 balances[m] = (paidTotals[m] || 0) - (owedTotals[m] || 0);
             });
 
-            // Calculate Minimum Transfers
-            const debtors = [];  // Persons who owe money (balance < 0)
-            const creditors = []; // Persons who should receive money (balance > 0)
+            const debtors = [];  
+            const creditors = []; 
 
             Object.keys(balances).forEach(m => {
                 const bal = balances[m];
@@ -574,7 +725,6 @@
                 }
             });
 
-            // Greedily match debtors with creditors
             const transactions = [];
             let i = 0, j = 0;
 
@@ -602,14 +752,13 @@
         function renderSettlement() {
             const { balances, paidTotals, owedTotals, transactions } = calculateSettlement();
 
-            // Render Transactions
             const transListEl = document.getElementById('settlementTransList');
             transListEl.innerHTML = '';
 
             if (transactions.length === 0) {
                 transListEl.innerHTML = `
                     <div class="text-center py-6 text-slate-400 text-xs">
-                        🎉 서로 정산할 내역이 없거나 완전히 일치합니다!
+                        🎉 정산할 내역이 없거나 서로 깔끔하게 일치합니다!
                     </div>
                 `;
             } else {
@@ -630,7 +779,6 @@
                 });
             }
 
-            // Render Member Balances
             const balanceListEl = document.getElementById('memberBalanceList');
             balanceListEl.innerHTML = '';
 
@@ -667,17 +815,25 @@
             });
         }
 
-        // Copy Settlement Summary to Clipboard
+        // Copy Room Link or Code
+        function copyRoomInviteLink() {
+            const shareUrl = window.location.origin + window.location.pathname + '?room=' + state.roomId;
+            const textToCopy = `✈️ [${state.tripTitle}] 여행 가계부 함께 쓰기!\n아래 링크로 접속하면 실시간으로 같이 기록하고 정산할 수 있어:\n${shareUrl}\n(방 코드: ${state.roomId})`;
+
+            copyTextToClipboard(textToCopy, "초대 링크 및 코드가 복사되었습니다!");
+        }
+
+        // Copy Summary Text
         function copySettlementSummary() {
-            const { transactions, paidTotals } = calculateSettlement();
+            const { transactions } = calculateSettlement();
             const totalSpent = state.expenses.reduce((s, e) => s + Number(e.amount), 0);
 
-            let summary = `✈️ [${state.tripTitle}] 정산 내역\n`;
+            let summary = `✈️ [${state.tripTitle}] 실시간 정산 결과\n`;
             summary += `-------------------------\n`;
             summary += `💵 총 지출: ${totalSpent.toLocaleString()}원\n`;
-            summary += `👥 참여 멤버: ${state.members.join(', ')}\n\n`;
+            summary += `👥 멤버: ${state.members.join(', ')}\n\n`;
 
-            summary += `💡 [최소 송금 안내]\n`;
+            summary += `💡 [추천 최적 송금 경로]\n`;
             if (transactions.length === 0) {
                 summary += `정산할 금액이 없습니다!\n`;
             } else {
@@ -686,59 +842,71 @@
                 });
             }
 
-            summary += `\n지출 내역 확인 후 위 금액대로 송금해주세요! 👍`;
+            summary += `\n실시간 여행가계부에서 확인하기: ${window.location.href}`;
+            copyTextToClipboard(summary, "카카오톡 정산 내역이 복사되었습니다!");
+        }
 
-            // Copy logic using fallback
+        function copyTextToClipboard(text, successMessage) {
             const textArea = document.createElement("textarea");
-            textArea.value = summary;
+            textArea.value = text;
             document.body.appendChild(textArea);
             textArea.select();
             try {
                 document.execCommand('copy');
-                showToast("카카오톡 공유용 내역이 복사되었습니다!");
+                showToast(successMessage);
             } catch (err) {
                 showToast("복사에 실패했습니다.");
             }
             document.body.removeChild(textArea);
         }
 
-        // Edit Trip Title
         function editTripTitle() {
             const newTitle = prompt("여행 이름을 입력하세요:", state.tripTitle);
             if (newTitle && newTitle.trim() !== "") {
                 state.tripTitle = newTitle.trim();
-                saveState();
-                renderAll();
+                pushStateToCloud();
             }
         }
 
-        // Load Sample Data
-        function loadSampleData() {
-            state.tripTitle = "제주도 3박4일 우정여행";
-            state.members = ["민수", "지은", "현우", "유진"];
-            state.expenses = [
-                { id: "1", title: "첫날 흑돼지 구이", amount: 128000, category: "식비", payer: "민수", participants: ["민수", "지은", "현우", "유진"] },
-                { id: "2", title: "렌트카 기름값", amount: 45000, category: "교통", payer: "지은", participants: ["민수", "지은", "현우", "유진"] },
-                { id: "3", title: "감성 오션뷰 카페", amount: 32000, category: "식비", payer: "현우", participants: ["민수", "지은", "현우", "유진"] },
-                { id: "4", title: "우도 스쿠터 대여", amount: 60000, category: "관광/쇼핑", payer: "유진", participants: ["지은", "유진"] },
-                { id: "5", title: "제주 풀빌라 숙소", amount: 240000, category: "숙박", payer: "민수", participants: ["민수", "지은", "현우", "유진"] }
-            ];
-            saveState();
-            renderAll();
-            showToast("샘플 데이터가 로드되었습니다.");
+        // Room Modals
+        function openRoomModal() {
+            document.getElementById('roomModal').classList.remove('hidden');
         }
 
-        // Helper Toast Notice
+        function closeRoomModal() {
+            document.getElementById('roomModal').classList.add('hidden');
+        }
+
+        function joinRoomFromInput() {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!code) {
+                showToast("방 코드를 입력해주세요.");
+                return;
+            }
+            window.joinRoomById(code);
+            closeRoomModal();
+            showToast(`${code} 방으로 이동했습니다.`);
+        }
+
+        function createNewRoom() {
+            const newCode = 'TRIP-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+            state.tripTitle = "우리의 새로운 여행";
+            state.members = ["나"];
+            state.expenses = [];
+            window.joinRoomById(newCode);
+            closeRoomModal();
+            showToast(`새로운 방(${newCode})이 생성되었습니다!`);
+        }
+
         function showToast(msg) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
             toast.classList.remove('opacity-0');
             setTimeout(() => {
                 toast.classList.add('opacity-0');
-            }, 2000);
+            }, 2200);
         }
 
-        // Security Utility
         function escapeHtml(str) {
             return String(str).replace(/[&<>"']/g, function(m) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
